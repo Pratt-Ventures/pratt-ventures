@@ -9,7 +9,19 @@ Run:  python3 build.py
 import json, os, pathlib, re, shutil, datetime
 
 ROOT = pathlib.Path(__file__).parent.resolve()
-ORIGIN = "https://prattventures.com"
+
+# Canonical origin for canonical/OG/JSON-LD/sitemap URLs. Override while the site
+# lives somewhere other than its production domain, e.g.
+#   PV_ORIGIN=https://pratt-ventures.github.io/pratt-ventures python3 build.py
+ORIGIN = os.environ.get("PV_ORIGIN", "https://prattventures.com").rstrip("/")
+
+# Write a CNAME file for GitHub Pages custom domains:
+#   PV_CNAME=prattventures.com python3 build.py
+CNAME = os.environ.get("PV_CNAME", "").strip()
+
+# Keep a staging deploy out of the index so it never competes with the live
+# domain in search results:  PV_NOINDEX=1 python3 build.py
+NOINDEX = os.environ.get("PV_NOINDEX", "").strip() not in ("", "0", "false", "no")
 BRAND = "Pratt Ventures, LLC"
 TAGLINE = "Driving convergence of technology and strategy to amplify results!"
 PHONE = "561-693-6944"
@@ -110,6 +122,11 @@ def head(p):
     ld = json.dumps({"@context": "https://schema.org", "@graph": graph},
                     indent=None, separators=(",", ":"))
 
+    robots = p.get("robots", "index, follow, max-image-preview:large, "
+                             "max-snippet:-1, max-video-preview:-1")
+    if NOINDEX:
+        robots = "noindex, nofollow"
+
     prev_next = ""
     return f"""<!doctype html>
 <html lang="en-US">
@@ -119,7 +136,7 @@ def head(p):
 <title>{esc(p['title'])}</title>
 <meta name="description" content="{esc(p['desc'])}">
 <link rel="canonical" href="{url}">
-<meta name="robots" content="{p.get('robots','index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1')}">
+<meta name="robots" content="{robots}">
 <meta name="author" content="{BRAND}">
 <meta name="theme-color" content="#050505">
 <meta name="color-scheme" content="dark">
@@ -254,14 +271,34 @@ def band(title, lede, cta_href, cta_label):
   </div>
 </section>"""
 
+def relativize(html, depth):
+    """Rewrite root-absolute internal hrefs/srcs to be relative to this page.
+
+    Keeps the site portable: it works at a domain root, in a GitHub Pages
+    project subpath, or in any subfolder, with no rebuild. Absolute URLs
+    (canonical, og:*, JSON-LD) are untouched because they start with https://.
+    """
+    prefix = "../" * depth
+
+    def sub(m):
+        attr, target = m.group(1), m.group(2)
+        rel = prefix + target.lstrip("/")
+        if not rel:
+            rel = "./"
+        return '%s="%s"' % (attr, rel)
+
+    return re.sub(r'\b(href|src)="(/[^"]*)"', sub, html)
+
+
 def write(path, html):
     out = ROOT / path.strip("/")
     if path == "/":
         out = ROOT / "index.html"
     elif not path.endswith(".html"):
         out = ROOT / path.strip("/") / "index.html"
+    depth = len(out.relative_to(ROOT).parts) - 1
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(html, encoding="utf-8")
+    out.write_text(relativize(html, depth), encoding="utf-8")
     return out
 
 
@@ -967,25 +1004,39 @@ def main():
         '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
         + "\n".join(urls) + "\n</urlset>\n", encoding="utf-8")
 
-    (ROOT / "robots.txt").write_text(
-        "User-agent: *\n"
-        "Allow: /\n"
-        "Disallow: /login/\n\n"
-        f"Sitemap: {ORIGIN}/sitemap.xml\n", encoding="utf-8")
+    if NOINDEX:
+        (ROOT / "robots.txt").write_text(
+            "# Staging deploy - not for indexing\n"
+            "User-agent: *\n"
+            "Disallow: /\n", encoding="utf-8")
+    else:
+        (ROOT / "robots.txt").write_text(
+            "User-agent: *\n"
+            "Allow: /\n"
+            "Disallow: /login/\n\n"
+            f"Sitemap: {ORIGIN}/sitemap.xml\n", encoding="utf-8")
 
     (ROOT / "site.webmanifest").write_text(json.dumps({
         "name": BRAND, "short_name": "Pratt Ventures",
         "description": TAGLINE,
-        "start_url": "/", "display": "standalone",
+        "start_url": "./", "display": "standalone",
         "background_color": "#050505", "theme_color": "#050505",
         "icons": [
-            {"src": "/assets/img/apple-touch-icon.png", "sizes": "180x180", "type": "image/png"},
-            {"src": "/assets/img/logo-512.png", "sizes": "512x512", "type": "image/png"},
-            {"src": "/assets/img/favicon.svg", "sizes": "any", "type": "image/svg+xml"},
+            {"src": "assets/img/apple-touch-icon.png", "sizes": "180x180", "type": "image/png"},
+            {"src": "assets/img/logo-512.png", "sizes": "512x512", "type": "image/png"},
+            {"src": "assets/img/favicon.svg", "sizes": "any", "type": "image/svg+xml"},
         ],
     }, indent=2) + "\n", encoding="utf-8")
 
-    print("Built %d pages + sitemap.xml + robots.txt + site.webmanifest" % len(written))
+    (ROOT / ".nojekyll").write_text("", encoding="utf-8")
+    if CNAME:
+        (ROOT / "CNAME").write_text(CNAME + "\n", encoding="utf-8")
+
+    extras = "sitemap.xml + robots.txt + site.webmanifest + .nojekyll"
+    if CNAME:
+        extras += " + CNAME (%s)" % CNAME
+    print("Built %d pages + %s" % (len(written), extras))
+    print("Canonical origin: %s%s" % (ORIGIN, "  [NOINDEX]" if NOINDEX else ""))
     for p, out in written:
         print("  %-42s -> %s" % (p["path"], out.relative_to(ROOT)))
 

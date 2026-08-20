@@ -44,14 +44,71 @@ consistent. Edit `build.py`, then:
 python3 build.py
 ```
 
-That regenerates every `index.html`, plus `sitemap.xml`, `robots.txt` and `site.webmanifest`.
-Python 3.9+, no dependencies.
+That regenerates every `index.html`, plus `sitemap.xml`, `robots.txt`, `site.webmanifest` and
+`.nojekyll`. Python 3.9+, no dependencies.
+
+All internal links are written **relative** to each page, so the site runs unchanged at a domain
+root, in a GitHub Pages project subpath, or in any subfolder.
+
+### Build flags
+
+| Variable | Purpose |
+|---|---|
+| `PV_ORIGIN` | Canonical origin used in canonical/OG/JSON-LD/sitemap URLs. Default `https://prattventures.com` |
+| `PV_NOINDEX` | `1` marks the whole build `noindex, nofollow` and blocks it in `robots.txt` — for staging |
+| `PV_CNAME` | Writes a `CNAME` file for a GitHub Pages custom domain |
 
 Preview locally:
 
 ```bash
 python3 -m http.server 8899
 ```
+
+## Deployment
+
+### Current state — staging on GitHub Pages
+
+The committed build is configured for `https://pratt-ventures.github.io/pratt-ventures/` and is
+marked `noindex`, so it cannot compete with `prattventures.com` in search while both are up.
+
+```bash
+PV_ORIGIN=https://pratt-ventures.github.io/pratt-ventures PV_NOINDEX=1 python3 build.py
+```
+
+Repo settings must be: **Settings → Pages → Source: Deploy from a branch → `main` → `/ (root)`**.
+
+### Going live on prattventures.com
+
+1. **Point the domain at Pages.** At your DNS host, for the apex `prattventures.com`:
+
+   | Type | Name | Value |
+   |---|---|---|
+   | A | `@` | `185.199.108.153` |
+   | A | `@` | `185.199.109.153` |
+   | A | `@` | `185.199.110.153` |
+   | A | `@` | `185.199.111.153` |
+   | AAAA | `@` | `2606:50c0:8000::153` |
+   | AAAA | `@` | `2606:50c0:8001::153` |
+   | AAAA | `@` | `2606:50c0:8002::153` |
+   | AAAA | `@` | `2606:50c0:8003::153` |
+   | CNAME | `www` | `pratt-ventures.github.io` |
+
+   This is the cutover — it takes traffic off the old WordPress site.
+
+2. **Set the custom domain** in **Settings → Pages → Custom domain** → `prattventures.com` → Save.
+   Wait for the DNS check to pass, then tick **Enforce HTTPS**.
+
+3. **Rebuild for production** and push:
+
+   ```bash
+   PV_CNAME=prattventures.com python3 build.py
+   ```
+
+   This restores live canonicals, `index, follow`, the real `robots.txt`, and writes `CNAME`.
+
+4. **Submit the sitemap** at `https://prattventures.com/sitemap.xml` in Google Search Console.
+
+No redirects are needed — every URL matches the old WordPress site exactly.
 
 ## SEO
 
