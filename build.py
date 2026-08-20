@@ -45,7 +45,7 @@ NAV = [
     ("/about-us/", "About Us", None),
     ("/our-team/", "Our Team", TEAM_LINKS),
     ("/our-portfolio/", "Our Portfolio", None),
-    ("/we-recommend/", "We Recommend", None),
+    ("/we-recommend/", "Practices & Tools", None),
     ("/contact-us/", "Contact Us", None),
     ("/login/", "Login", None),
 ]
@@ -225,7 +225,7 @@ def footer():
           <li><a href="/about-us/">About Us</a></li>
           <li><a href="/our-team/">Our Team</a></li>
           <li><a href="/our-portfolio/">Our Portfolio</a></li>
-          <li><a href="/we-recommend/">We Recommend</a></li>
+          <li><a href="/we-recommend/">Best Practices and Tools</a></li>
         </ul>
       </div>
       <div>
@@ -354,6 +354,11 @@ PORTFOLIO = [
      "text": "RocketCalm and MindFusionX provide higher level meditation programs that accelerate "
              "meditation and mindfulness practices. These personal growth programs enhance well "
              "being and success using brain stimulation and leading edge learning processes."},
+    {"name": "Stealth Investments", "tag": "Undisclosed", "url": None,
+     "logo": None, "logo_kind": None,
+     "alt": "Stealth investments at Pratt Ventures",
+     "text": "E-commerce tools, a decision support tool, and engineering lifecycle tools "
+             "including toteboard and mouse wiggler."},
     {"name": "Always Exploring", "tag": "Open", "url": None,
      "logo": "/assets/img/exploring.jpg", "logo_kind": "ico",
      "alt": "Pratt Ventures is always exploring new opportunities",
@@ -828,9 +833,9 @@ def page_recommend():
 <section class="phead">
   {FIELD}
   <div class="wrap phead__in">
-    {crumbs([("/", "Home"), ("/we-recommend/", "We Recommend")])}
-    <p class="eyebrow mt-m">Recommended Tech and Data Sources</p>
-    <h1 class="d2 phead__ttl">We Recommend</h1>
+    {crumbs([("/", "Home"), ("/we-recommend/", "Best Practices and Tools")])}
+    <p class="eyebrow mt-m">Recommended Practices, Tech and Data Sources</p>
+    <h1 class="d2 phead__ttl">Best Practices and Tools We Like</h1>
     <p class="lede phead__lede">Here are some technologies and data sources we’ve found helpful that aren’t as widely known as they should be…</p>
   </div>
 </section>
@@ -838,10 +843,10 @@ def page_recommend():
 <section class="section">
   <div class="wrap wrap--narrow" style="padding-inline:0">
     <article class="rec rv">
-      <p class="eyebrow eyebrow--plain">Data Source</p>
-      <h2 class="d3 mt-m">rank2traffic</h2>
-      <p class="body mt-m">This service leverages alexa.com data to provide estimates of historical traffic. This is helpful for time base prediction and estimation.</p>
-      <p class="mt-m"><a class="link" href="https://www.rank2traffic.com/" rel="noopener nofollow" target="_blank">Get historical web rank/traffic data <span class="arw">&rarr;</span></a></p>
+      <p class="eyebrow eyebrow--plain">In Progress</p>
+      <h2 class="d3 mt-m">We are refreshing this list.</h2>
+      <p class="body mt-m">We are always exploring tools and practices worth passing on. Stay tuned.</p>
+      <p class="mt-m"><a class="link" href="/contact-us/">Suggest something <span class="arw">&rarr;</span></a></p>
     </article>
   </div>
 </section>
@@ -850,10 +855,10 @@ def page_recommend():
 </main>"""
     return {
         "path": "/we-recommend/",
-        "title": "We Recommend | Tech & Data Sources | Pratt Ventures",
-        "desc": "Technologies and data sources Pratt Ventures has found helpful that aren’t as widely "
-                "known as they should be, including rank2traffic web traffic data.",
-        "trail": [("/", "Home"), ("/we-recommend/", "We Recommend")],
+        "title": "Best Practices and Tools We Like | Pratt Ventures",
+        "desc": "Best practices, technologies and data sources Pratt Ventures has found helpful "
+                "that aren’t as widely known as they should be.",
+        "trail": [("/", "Home"), ("/we-recommend/", "Best Practices and Tools")],
         "body": body,
     }
 
